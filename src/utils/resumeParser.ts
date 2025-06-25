@@ -1,4 +1,5 @@
 import { ResumeData } from '../types';
+import mammoth from 'mammoth';
 
 export const parseResumeFile = async (file: File): Promise<ResumeData> => {
   const fileName = file.name;
@@ -13,8 +14,10 @@ export const parseResumeFile = async (file: File): Promise<ResumeData> => {
       // For demo purposes, we'll simulate PDF parsing
       extractedText = await simulatePDFParsing(file);
     } else if (fileType.includes('word') || fileType.includes('document')) {
-      // For demo purposes, we'll simulate DOCX parsing
-      extractedText = await simulateDocxParsing(file);
+      // Use mammoth to parse DOCX files
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      extractedText = result.value;
     } else {
       throw new Error('Unsupported file type');
     }
@@ -58,36 +61,6 @@ JavaScript, React, Node.js, Python, MongoDB, PostgreSQL, AWS, Docker, Git
 
 EDUCATION
 Bachelor of Science in Computer Science | University of Technology | 2018`;
-};
-
-const simulateDocxParsing = async (file: File): Promise<string> => {
-  // Simulate DOCX parsing delay
-  await new Promise(resolve => setTimeout(resolve, 1200));
-  
-  return `Jane Smith
-Full Stack Developer
-jane.smith@email.com | (555) 987-6543
-
-PROFESSIONAL EXPERIENCE
-Full Stack Developer | Innovation Labs | 2021-Present
-• Design and develop scalable web applications using React and Express.js
-• Implement RESTful APIs and integrate with third-party services
-• Manage database design and optimization for PostgreSQL
-
-Junior Developer | WebSolutions Inc | 2019-2021
-• Assisted in developing client websites using HTML, CSS, and JavaScript
-• Participated in code reviews and maintained coding standards
-• Worked with senior developers to implement new features
-
-TECHNICAL SKILLS
-Frontend: React, Vue.js, HTML5, CSS3, JavaScript, TypeScript
-Backend: Node.js, Express.js, Python, Django
-Database: PostgreSQL, MongoDB, MySQL
-Tools: Git, Docker, AWS, Jenkins
-
-EDUCATION
-Bachelor of Computer Science | State University | 2019
-Relevant Coursework: Data Structures, Algorithms, Web Development, Database Systems`;
 };
 
 const extractSections = (text: string) => {
