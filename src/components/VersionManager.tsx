@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, TrendingUp, Download, Eye, Compare, Star, Zap } from 'lucide-react';
+import { Clock, TrendingUp, Download, Eye, GitCompare as Compare, Star, Zap } from 'lucide-react';
 import { ResumeVersion, VersionComparison } from '../types';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
