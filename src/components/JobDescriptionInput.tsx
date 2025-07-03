@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Loader2, Edit3 } from 'lucide-react';
+import { Sparkles, Loader2, Edit3, FileText } from 'lucide-react';
 
 interface JobDescriptionInputProps {
   value: string;
@@ -25,6 +25,40 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
     onChange('');
   };
 
+  const loadSampleJD = () => {
+    const sampleJD = `Software Engineer
+Position: Senior Software Engineer
+Experience: 3-5 Years
+Location: Remote / Hybrid
+Job Type: Full-time
+
+🔧 Responsibilities:
+Design and develop scalable web applications using modern frameworks
+Lead technical architecture decisions and code reviews
+Collaborate with cross-functional teams including product, design, and QA
+Mentor junior developers and contribute to team growth
+Implement best practices for testing, deployment, and monitoring
+Participate in agile development processes and sprint planning
+
+🛠️ Required Skills:
+Strong proficiency in JavaScript, Python, or Java
+Experience with React, Angular, or Vue.js frameworks
+Knowledge of Node.js, Express, or similar backend technologies
+Familiarity with databases (SQL and NoSQL)
+Experience with cloud platforms (AWS, Azure, or GCP)
+Understanding of DevOps practices and CI/CD pipelines
+Strong problem-solving and communication skills
+
+✅ Preferred Qualifications:
+Bachelor's degree in Computer Science or related field
+Experience with microservices architecture
+Knowledge of containerization (Docker, Kubernetes)
+Familiarity with agile methodologies
+Previous experience in a leadership or mentoring role`;
+    
+    onChange(sampleJD);
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8 border border-secondary-100">
       <div className="mb-6">
@@ -36,7 +70,7 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
           </div>
         </div>
         <p className="text-secondary-600">
-          Paste or edit the job description to get personalized optimization suggestions
+          Paste or edit the job description to get personalized optimization suggestions for any role
         </p>
       </div>
 
@@ -46,21 +80,33 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
             <label htmlFor="job-description" className="block text-sm font-medium text-secondary-700">
               Job Description Text
             </label>
-            {value && (
-              <button
-                onClick={clearJobDescription}
-                className="text-sm text-secondary-500 hover:text-secondary-700 transition-colors"
-                type="button"
-              >
-                Clear
-              </button>
-            )}
+            <div className="flex items-center space-x-2">
+              {!value && (
+                <button
+                  onClick={loadSampleJD}
+                  className="text-sm text-primary-600 hover:text-primary-700 transition-colors flex items-center space-x-1"
+                  type="button"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Load Sample</span>
+                </button>
+              )}
+              {value && (
+                <button
+                  onClick={clearJobDescription}
+                  className="text-sm text-secondary-500 hover:text-secondary-700 transition-colors"
+                  type="button"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
           <textarea
             id="job-description"
             value={value}
             onChange={handleTextChange}
-            placeholder="Paste the job description here to get tailored resume optimization suggestions..."
+            placeholder="Paste any job description here to get tailored resume optimization suggestions for that specific role..."
             className="w-full h-48 px-4 py-3 border border-secondary-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none transition-all duration-200 text-sm leading-relaxed"
             disabled={isAnalyzing}
           />
@@ -115,7 +161,23 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
               <div>
                 <h4 className="text-sm font-semibold text-primary-800 mb-1">Ready for Analysis</h4>
                 <p className="text-sm text-primary-700">
-                  Your job description is loaded and ready. Click "Analyze & Optimize Resume" to get personalized suggestions.
+                  Your job description is loaded and ready. Click "Analyze & Optimize Resume" to get personalized suggestions for this specific role.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!value && (
+          <div className="bg-secondary-50 border border-secondary-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="bg-secondary-100 p-2 rounded-full">
+                <FileText className="h-4 w-4 text-secondary-600" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-secondary-800 mb-1">Works for Any Role</h4>
+                <p className="text-sm text-secondary-700">
+                  This optimizer works for all industries and positions - Software Engineer, Marketing Manager, Data Scientist, Sales Representative, and more!
                 </p>
               </div>
             </div>

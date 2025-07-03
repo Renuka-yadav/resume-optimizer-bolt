@@ -15,36 +15,7 @@ import toast from 'react-hot-toast';
 function App() {
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [jobDescription, setJobDescription] = useState<string>(`WordPress Developer
-Position: WordPress Developer
-Experience: 1–4 Years
-Location: Remote / On-site
-Job Type: Full-time / Contract
-
-🔧 Responsibilities:
-Design and develop responsive WordPress websites using themes and custom code.
-Customize themes and plugins to meet specific project requirements.
-Ensure high performance and availability of websites on all devices.
-Troubleshoot bugs and optimize websites for speed and SEO.
-Integrate third-party APIs and plugins.
-Migrate websites from other platforms to WordPress.
-Maintain and update existing websites regularly.
-Collaborate with designers, project managers, and content teams.
-
-🛠️ Required Skills:
-Strong proficiency in WordPress, PHP, HTML5, CSS3, and JavaScript.
-Experience with custom theme and plugin development.
-Knowledge of MySQL and database management.
-Familiarity with Gutenberg and Elementor (or similar page builders).
-Experience with WooCommerce is a plus.
-Understanding of SEO, website performance, and security best practices.
-Proficient with Git and version control systems.
-Basic understanding of RESTful APIs.
-
-✅ Preferred Qualifications:
-Bachelor's degree in Computer Science, Web Development, or related field.
-Experience with Headless WordPress or Jamstack is a plus.
-Familiarity with CI/CD pipelines is a bonus.`);
+  const [jobDescription, setJobDescription] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showOptimizer, setShowOptimizer] = useState(false);
   const [improvedResume, setImprovedResume] = useState<string>('');
@@ -65,49 +36,51 @@ Familiarity with CI/CD pipelines is a bonus.`);
   };
 
   const handleAnalyze = async () => {
-    if (!resumeData) return;
+    if (!resumeData || !jobDescription.trim()) return;
     
     setIsAnalyzing(true);
     setIsMLAnalyzing(true);
     
-    // Enhanced analysis for WordPress development roles
+    // Enhanced analysis for any job role
     setTimeout(() => {
-      const wordpressKeywords = extractWordPressKeywords(jobDescription);
-      const missingKeywords = findMissingKeywords(resumeData.extractedText, wordpressKeywords);
+      const jobKeywords = extractJobKeywords(jobDescription);
+      const missingKeywords = findMissingKeywords(resumeData.extractedText, jobKeywords);
+      const candidateName = extractCandidateName(resumeData.extractedText);
+      const jobTitle = extractJobTitle(jobDescription);
       
       const mockAnalysis: AnalysisResult = {
-        overallScore: calculateOverallScore(resumeData.extractedText, wordpressKeywords),
+        overallScore: calculateOverallScore(resumeData.extractedText, jobKeywords),
         sections: {
           skills: { 
-            score: calculateSkillsScore(resumeData.sections.skills, wordpressKeywords), 
-            suggestions: generateSkillsSuggestions(resumeData.sections.skills, wordpressKeywords),
-            confidence: 92,
-            mlInsights: ['Strong WordPress foundation', 'Excellent AI tools integration', 'Good full-stack coverage']
+            score: calculateSkillsScore(resumeData.sections.skills, jobKeywords), 
+            suggestions: generateSkillsSuggestions(resumeData.sections.skills, jobKeywords, jobTitle),
+            confidence: 90,
+            mlInsights: ['Strong technical foundation', 'Good skill diversity', 'Relevant expertise demonstrated']
           },
           experience: { 
-            score: calculateExperienceScore(resumeData.sections.experience, wordpressKeywords), 
-            suggestions: generateExperienceSuggestions(resumeData.sections.experience),
-            confidence: 88,
-            mlInsights: ['Well-quantified achievements', 'Strong project diversity', 'Good client impact metrics']
+            score: calculateExperienceScore(resumeData.sections.experience, jobKeywords), 
+            suggestions: generateExperienceSuggestions(resumeData.sections.experience, jobTitle),
+            confidence: 85,
+            mlInsights: ['Well-structured experience', 'Good progression shown', 'Quantified achievements present']
           },
           education: { 
-            score: 85, 
-            suggestions: ['Consider adding WordPress certifications', 'Include relevant web development courses'],
-            confidence: 78,
-            mlInsights: ['Solid educational background', 'Good certification coverage']
+            score: 82, 
+            suggestions: generateEducationSuggestions(jobTitle),
+            confidence: 75,
+            mlInsights: ['Solid educational background', 'Relevant coursework highlighted']
           },
           keywords: { 
-            score: calculateKeywordScore(resumeData.extractedText, wordpressKeywords), 
-            suggestions: ['Add more WordPress-specific terminology', 'Include plugin and theme development experience'],
-            confidence: 95,
-            mlInsights: ['Excellent keyword coverage', 'Strong technical terminology']
+            score: calculateKeywordScore(resumeData.extractedText, jobKeywords), 
+            suggestions: generateKeywordSuggestions(missingKeywords, jobTitle),
+            confidence: 93,
+            mlInsights: ['Good keyword coverage', 'Industry-relevant terminology used']
           }
         },
         missingKeywords,
-        strengthAreas: identifyStrengths(resumeData.extractedText),
-        improvementAreas: identifyImprovements(resumeData.extractedText, wordpressKeywords),
-        atsCompatibility: calculateATSCompatibility(resumeData.extractedText, wordpressKeywords),
-        semanticScore: 85
+        strengthAreas: identifyStrengths(resumeData.extractedText, jobTitle),
+        improvementAreas: identifyImprovements(resumeData.extractedText, jobKeywords, jobTitle),
+        atsCompatibility: calculateATSCompatibility(resumeData.extractedText, jobKeywords),
+        semanticScore: 82
       };
       
       // Perform BERT analysis
@@ -127,7 +100,7 @@ Familiarity with CI/CD pipelines is a bonus.`);
       // Create initial version
       const initialVersion: ResumeVersion = {
         id: `version-${Date.now()}`,
-        name: 'Original Resume - Aryan Choubey',
+        name: `Original Resume - ${candidateName}`,
         content: resumeData.extractedText,
         timestamp: new Date(),
         analysisResult: mockAnalysis,
@@ -143,7 +116,7 @@ Familiarity with CI/CD pipelines is a bonus.`);
       
       setVersions([initialVersion]);
       setCurrentVersion(initialVersion);
-      toast.success('Analysis complete! Your resume shows strong WordPress expertise.');
+      toast.success(`Analysis complete! Resume optimized for ${jobTitle} position.`);
     }, 3000);
   };
 
@@ -151,10 +124,11 @@ Familiarity with CI/CD pipelines is a bonus.`);
     setImprovedResume(improved);
     
     if (analysisResult && bertAnalysis) {
+      const candidateName = extractCandidateName(resumeData?.extractedText || '');
       // Create new version
       const newVersion: ResumeVersion = {
         id: `version-${Date.now()}`,
-        name: `AI-Optimized v${versions.length + 1}`,
+        name: `AI-Optimized v${versions.length + 1} - ${candidateName}`,
         content: improved,
         timestamp: new Date(),
         analysisResult: {
@@ -170,7 +144,7 @@ Familiarity with CI/CD pipelines is a bonus.`);
       
       setVersions(prev => [...prev, newVersion]);
       setCurrentVersion(newVersion);
-      toast.success('New optimized version saved with enhanced WordPress focus!');
+      toast.success('New optimized version saved with enhanced job-specific focus!');
     }
   };
 
@@ -216,8 +190,8 @@ Familiarity with CI/CD pipelines is a bonus.`);
             <span className="text-primary-600 block">Optimizer</span>
           </h1>
           <p className="text-xl text-secondary-600 max-w-3xl mx-auto leading-relaxed">
-            Transform your resume with advanced ML analysis, semantic understanding, and intelligent optimization 
-            to maximize your chances of landing your dream WordPress developer job.
+            Transform any resume with advanced ML analysis, semantic understanding, and intelligent optimization 
+            to maximize your chances of landing your dream job across all industries.
           </p>
         </motion.div>
 
@@ -335,21 +309,99 @@ Familiarity with CI/CD pipelines is a bonus.`);
   );
 }
 
-// WordPress-specific analysis functions optimized for Aryan's resume
-const extractWordPressKeywords = (jobDescription: string): string[] => {
-  const wordpressKeywords = [
-    'WordPress', 'PHP', 'HTML5', 'CSS3', 'JavaScript', 'MySQL', 'Gutenberg', 
-    'Elementor', 'WooCommerce', 'SEO', 'Git', 'REST API', 'Custom themes', 
-    'Custom plugins', 'Responsive design', 'Performance optimization', 
-    'Security best practices', 'Database management', 'Version control',
-    'Headless WordPress', 'Jamstack', 'CI/CD', 'Page builders', 'WPBakery',
-    'Visual Composer', 'cPanel', 'WP Engine', 'Bootstrap', 'React.js',
-    'UI/UX design', 'Figma', 'Adobe XD', 'Payment Gateway', 'Google Analytics'
+// Universal analysis functions that work for any job role
+const extractJobKeywords = (jobDescription: string): string[] => {
+  const text = jobDescription.toLowerCase();
+  const allKeywords = new Set<string>();
+  
+  // Technical skills patterns
+  const techPatterns = [
+    /\b(javascript|python|java|react|angular|vue|node\.?js|typescript|html5?|css3?|sql|mongodb|postgresql|mysql|aws|azure|docker|kubernetes|git|ci\/cd|devops|agile|scrum)\b/gi,
+    /\b(machine learning|data science|artificial intelligence|ai|ml|deep learning|tensorflow|pytorch|pandas|numpy|scikit-learn)\b/gi,
+    /\b(wordpress|php|drupal|magento|shopify|woocommerce|elementor|gutenberg)\b/gi,
+    /\b(photoshop|illustrator|figma|sketch|adobe|ui\/ux|user experience|user interface)\b/gi,
+    /\b(salesforce|hubspot|crm|erp|sap|oracle|microsoft office|excel|powerpoint|word)\b/gi,
+    /\b(project management|pmp|prince2|jira|confluence|trello|asana|slack)\b/gi
   ];
   
-  return wordpressKeywords.filter(keyword => 
-    jobDescription.toLowerCase().includes(keyword.toLowerCase())
-  );
+  // Soft skills patterns
+  const softSkillPatterns = [
+    /\b(leadership|management|communication|teamwork|collaboration|problem.solving|analytical|creative|innovative)\b/gi,
+    /\b(customer service|client relations|stakeholder management|presentation|negotiation|time management)\b/gi
+  ];
+  
+  // Industry-specific patterns
+  const industryPatterns = [
+    /\b(marketing|digital marketing|seo|sem|social media|content marketing|email marketing|analytics)\b/gi,
+    /\b(finance|accounting|financial analysis|budgeting|forecasting|investment|banking)\b/gi,
+    /\b(healthcare|medical|clinical|patient care|hipaa|medical records|nursing)\b/gi,
+    /\b(education|teaching|curriculum|instructional design|e-learning|training)\b/gi,
+    /\b(sales|business development|lead generation|crm|pipeline management|revenue)\b/gi
+  ];
+  
+  [...techPatterns, ...softSkillPatterns, ...industryPatterns].forEach(pattern => {
+    const matches = jobDescription.match(pattern);
+    if (matches) {
+      matches.forEach(match => allKeywords.add(match.toLowerCase().trim()));
+    }
+  });
+  
+  // Extract requirements and qualifications
+  const requirementSections = jobDescription.match(/(?:requirements?|qualifications?|skills?|experience)[:\s]+(.*?)(?=\n\n|\n[A-Z]|$)/gis);
+  if (requirementSections) {
+    requirementSections.forEach(section => {
+      const words = section.split(/[,\n•\-\*]/).map(w => w.trim().toLowerCase()).filter(w => w.length > 2);
+      words.forEach(word => {
+        if (word.length > 2 && word.length < 30) {
+          allKeywords.add(word);
+        }
+      });
+    });
+  }
+  
+  return Array.from(allKeywords).slice(0, 25); // Limit to top 25 keywords
+};
+
+const extractCandidateName = (resumeText: string): string => {
+  const lines = resumeText.split('\n').filter(line => line.trim());
+  if (lines.length > 0) {
+    const firstLine = lines[0].trim();
+    // Check if first line looks like a name (2-4 words, no special characters except spaces)
+    if (/^[A-Za-z\s]{2,50}$/.test(firstLine) && firstLine.split(' ').length <= 4) {
+      return firstLine;
+    }
+  }
+  return 'Candidate';
+};
+
+const extractJobTitle = (jobDescription: string): string => {
+  const titlePatterns = [
+    /(?:position|role|job title)[:\s]+([^\n.]+)/i,
+    /(?:seeking|hiring|looking for)\s+(?:a\s+)?([^.]+?)(?:\s+to|\s+who|\.|$)/i,
+    /^([A-Z][^.]+?)(?:\s*-|\s*\||\n)/m
+  ];
+  
+  for (const pattern of titlePatterns) {
+    const match = jobDescription.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  // Fallback: look for common job titles
+  const commonTitles = [
+    'Software Engineer', 'Data Scientist', 'Product Manager', 'Marketing Manager',
+    'Sales Representative', 'Business Analyst', 'Project Manager', 'Designer',
+    'Developer', 'Analyst', 'Specialist', 'Coordinator', 'Manager', 'Director'
+  ];
+  
+  for (const title of commonTitles) {
+    if (jobDescription.toLowerCase().includes(title.toLowerCase())) {
+      return title;
+    }
+  }
+  
+  return 'Professional';
 };
 
 const findMissingKeywords = (resumeText: string, keywords: string[]): string[] => {
@@ -363,27 +415,37 @@ const calculateOverallScore = (resumeText: string, keywords: string[]): number =
     resumeText.toLowerCase().includes(keyword.toLowerCase())
   ).length;
   
-  // Aryan's resume has strong WordPress coverage
   const baseScore = Math.min(95, (keywordMatches / keywords.length) * 100);
-  return Math.max(82, Math.round(baseScore));
+  const hasQuantification = /\d+%|\d+\+|\$[\d,]+|\d+ (users|customers|projects|clients|years|months)/i.test(resumeText);
+  const hasActionVerbs = /(led|managed|developed|created|implemented|designed|optimized|improved)/i.test(resumeText);
+  
+  let bonus = 0;
+  if (hasQuantification) bonus += 5;
+  if (hasActionVerbs) bonus += 5;
+  
+  return Math.max(65, Math.min(95, Math.round(baseScore + bonus)));
 };
 
 const calculateSkillsScore = (skills: string[], keywords: string[]): number => {
+  if (skills.length === 0) return 40;
+  
   const skillsText = skills.join(' ').toLowerCase();
   const matches = keywords.filter(keyword => 
     skillsText.includes(keyword.toLowerCase())
   ).length;
   
-  return Math.max(85, Math.min(98, Math.round((matches / keywords.length) * 100)));
+  return Math.max(50, Math.min(98, Math.round((matches / keywords.length) * 100 + 20)));
 };
 
 const calculateExperienceScore = (experience: string[], keywords: string[]): number => {
+  if (experience.length === 0) return 30;
+  
   const expText = experience.join(' ').toLowerCase();
   const hasQuantification = experience.some(exp => 
-    /\d+%|\d+\+|\$[\d,]+|\d+ (users|customers|projects|websites|clients)/i.test(exp)
+    /\d+%|\d+\+|\$[\d,]+|\d+ (users|customers|projects|clients|years|months)/i.test(exp)
   );
   
-  const baseScore = hasQuantification ? 88 : 75;
+  const baseScore = hasQuantification ? 85 : 70;
   const keywordBonus = keywords.filter(keyword => 
     expText.includes(keyword.toLowerCase())
   ).length * 3;
@@ -392,6 +454,8 @@ const calculateExperienceScore = (experience: string[], keywords: string[]): num
 };
 
 const calculateKeywordScore = (resumeText: string, keywords: string[]): number => {
+  if (keywords.length === 0) return 50;
+  
   const matches = keywords.filter(keyword => 
     resumeText.toLowerCase().includes(keyword.toLowerCase())
   ).length;
@@ -402,84 +466,136 @@ const calculateKeywordScore = (resumeText: string, keywords: string[]): number =
 const calculateATSCompatibility = (resumeText: string, keywords: string[]): number => {
   const keywordScore = calculateKeywordScore(resumeText, keywords);
   const hasStandardSections = /experience|education|skills/i.test(resumeText);
-  const hasContactInfo = /@/.test(resumeText) && /\+91/.test(resumeText);
+  const hasContactInfo = /@/.test(resumeText) && /\d{3}/.test(resumeText);
+  const hasProperFormatting = /•/.test(resumeText) || /\n/.test(resumeText);
   
-  let score = keywordScore * 0.7;
+  let score = keywordScore * 0.6;
   if (hasStandardSections) score += 20;
   if (hasContactInfo) score += 15;
+  if (hasProperFormatting) score += 10;
   
-  return Math.min(94, Math.round(score));
+  return Math.min(95, Math.round(score));
 };
 
-const generateSkillsSuggestions = (skills: string[], keywords: string[]): string[] => {
+const generateSkillsSuggestions = (skills: string[], keywords: string[], jobTitle: string): string[] => {
   const suggestions = [];
   const skillsText = skills.join(' ').toLowerCase();
   
-  if (!skillsText.includes('mysql')) {
-    suggestions.push('Add MySQL database management experience');
-  }
-  if (!skillsText.includes('gutenberg')) {
-    suggestions.push('Include Gutenberg block editor expertise');
-  }
-  if (!skillsText.includes('headless')) {
-    suggestions.push('Consider adding Headless WordPress experience');
+  const missingTechSkills = keywords.filter(keyword => 
+    !skillsText.includes(keyword.toLowerCase()) && 
+    /^(javascript|python|java|react|sql|aws|docker|git|agile)$/i.test(keyword)
+  );
+  
+  if (missingTechSkills.length > 0) {
+    suggestions.push(`Add relevant technical skills: ${missingTechSkills.slice(0, 3).join(', ')}`);
   }
   
-  return suggestions.length > 0 ? suggestions : ['Excellent WordPress skill coverage - consider advanced certifications'];
+  if (!skillsText.includes('communication')) {
+    suggestions.push('Include communication and collaboration skills');
+  }
+  
+  if (jobTitle.toLowerCase().includes('manager') && !skillsText.includes('leadership')) {
+    suggestions.push('Add leadership and management skills');
+  }
+  
+  return suggestions.length > 0 ? suggestions : ['Consider adding more industry-specific skills'];
 };
 
-const generateExperienceSuggestions = (experience: string[]): string[] => {
+const generateExperienceSuggestions = (experience: string[], jobTitle: string): string[] => {
   const suggestions = [];
   const expText = experience.join(' ').toLowerCase();
   
-  if (!expText.includes('migration')) {
-    suggestions.push('Highlight website migration experience');
-  }
-  if (!expText.includes('security')) {
-    suggestions.push('Emphasize WordPress security implementations');
+  if (!/\d+%|\d+\+|\$[\d,]+/.test(expText)) {
+    suggestions.push('Quantify your achievements with specific numbers and percentages');
   }
   
-  return suggestions.length > 0 ? suggestions : ['Strong quantified achievements - excellent project impact metrics'];
+  if (!expText.includes('team') && !expText.includes('collaborate')) {
+    suggestions.push('Highlight teamwork and collaboration experience');
+  }
+  
+  if (jobTitle.toLowerCase().includes('senior') && !expText.includes('led') && !expText.includes('managed')) {
+    suggestions.push('Emphasize leadership and mentoring responsibilities');
+  }
+  
+  return suggestions.length > 0 ? suggestions : ['Strong experience section with good detail'];
 };
 
-const identifyStrengths = (resumeText: string): string[] => {
+const generateEducationSuggestions = (jobTitle: string): string[] => {
+  const suggestions = [];
+  
+  if (jobTitle.toLowerCase().includes('data') || jobTitle.toLowerCase().includes('analyst')) {
+    suggestions.push('Consider adding data analysis or statistics courses');
+  }
+  
+  if (jobTitle.toLowerCase().includes('manager')) {
+    suggestions.push('Include any management or leadership training');
+  }
+  
+  suggestions.push('Add relevant certifications for your field');
+  
+  return suggestions;
+};
+
+const generateKeywordSuggestions = (missingKeywords: string[], jobTitle: string): string[] => {
+  if (missingKeywords.length === 0) {
+    return ['Excellent keyword coverage for this role'];
+  }
+  
+  return [
+    `Add these important keywords: ${missingKeywords.slice(0, 5).join(', ')}`,
+    'Incorporate job-specific terminology naturally throughout your resume',
+    'Use industry-standard terms and acronyms where appropriate'
+  ];
+};
+
+const identifyStrengths = (resumeText: string, jobTitle: string): string[] => {
   const strengths = [];
   const text = resumeText.toLowerCase();
   
-  if (text.includes('ai') && text.includes('automation')) {
-    strengths.push('Advanced AI tools integration');
-  }
-  if (text.includes('freelance') && text.includes('25+')) {
-    strengths.push('Extensive freelance project portfolio');
-  }
-  if (text.includes('$500k') || text.includes('revenue')) {
-    strengths.push('Proven business impact and revenue generation');
-  }
-  if (text.includes('performance') && text.includes('60%')) {
-    strengths.push('Strong performance optimization expertise');
-  }
-  if (text.includes('woocommerce') && text.includes('e-commerce')) {
-    strengths.push('Comprehensive e-commerce development experience');
+  if (/\d+%|\d+\+|\$[\d,]+/.test(text)) {
+    strengths.push('Quantified achievements and measurable results');
   }
   
-  return strengths.length > 0 ? strengths : ['Professional presentation', 'Strong technical foundation'];
+  if (/led|managed|supervised|directed/.test(text)) {
+    strengths.push('Leadership and management experience');
+  }
+  
+  if (/project|initiative|program/.test(text)) {
+    strengths.push('Project management and execution skills');
+  }
+  
+  if (/team|collaborate|cross-functional/.test(text)) {
+    strengths.push('Strong teamwork and collaboration abilities');
+  }
+  
+  if (/improved|optimized|enhanced|increased/.test(text)) {
+    strengths.push('Process improvement and optimization focus');
+  }
+  
+  return strengths.length > 0 ? strengths : ['Professional presentation', 'Clear structure'];
 };
 
-const identifyImprovements = (resumeText: string, keywords: string[]): string[] => {
+const identifyImprovements = (resumeText: string, keywords: string[], jobTitle: string): string[] => {
   const improvements = [];
   const missingKeywords = findMissingKeywords(resumeText, keywords);
   
-  if (missingKeywords.includes('Gutenberg')) {
-    improvements.push('Add Gutenberg block development experience');
-  }
-  if (missingKeywords.includes('Headless WordPress')) {
-    improvements.push('Consider adding Headless WordPress/JAMstack projects');
-  }
-  if (!resumeText.toLowerCase().includes('ci/cd')) {
-    improvements.push('Include CI/CD pipeline experience');
+  if (missingKeywords.length > 5) {
+    improvements.push('Add more role-specific keywords and terminology');
   }
   
-  return improvements.length > 0 ? improvements : ['Excellent coverage - consider advanced WordPress certifications'];
+  if (!/\d+%|\d+\+|\$[\d,]+/.test(resumeText)) {
+    improvements.push('Quantify achievements with specific metrics and numbers');
+  }
+  
+  if (!resumeText.toLowerCase().includes('result') && !resumeText.toLowerCase().includes('impact')) {
+    improvements.push('Emphasize results and business impact of your work');
+  }
+  
+  if (jobTitle.toLowerCase().includes('senior') && !resumeText.toLowerCase().includes('mentor')) {
+    improvements.push('Highlight mentoring and knowledge-sharing activities');
+  }
+  
+  return improvements.length > 0 ? improvements : ['Strong overall presentation'];
 };
 
 export default App;
